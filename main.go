@@ -36,15 +36,17 @@ func control() error {
 	}
 	for _, d := range conf.Dirs {
 		fmt.Printf("target: [%s] %s \n", d.Name, d.Path)
+
+		// fix Path
 		path := d.Path
+		path = strings.ReplaceAll(path, "~", home)
+		path = strings.ReplaceAll(path, "$HOME", home)
+		path = strings.ReplaceAll(path, "${HOME}", home)
+
 		if !file.Exists(path) {
 			fmt.Printf("unexistence of path: %s\n", path)
 			continue
 		}
-
-		path = strings.ReplaceAll(path, "~", home)
-		path = strings.ReplaceAll(path, "$HOME", home)
-		path = strings.ReplaceAll(path, "${HOME}", home)
 
 		commands := [][]string{
 			{"git", "-C", path, "pull"},
