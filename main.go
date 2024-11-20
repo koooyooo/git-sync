@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -48,10 +49,13 @@ func control() error {
 			continue
 		}
 
+		timeStr := time.Now().Format("2006-01-02 15:04:05")
+		commitMsg := fmt.Sprintf("update at: %s", timeStr)
+
 		commands := [][]string{
 			{"git", "-C", path, "pull"},
 			{"git", "-C", path, "add", "."},
-			{"git", "-C", path, "commit", "-m", "add new commit"},
+			{"git", "-C", path, "commit", "-m", commitMsg},
 			{"git", "-C", path, "push"},
 		}
 		for _, c := range commands {
