@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"github.com/go-yaml/yaml"
@@ -25,7 +26,8 @@ func main() {
 }
 
 func control() error {
-	customizeMsg := flag.Bool("c", false, "customize message")
+	msg := flag.Bool("m", false, "message")
+	editMsg := flag.Bool("e", false, "edit message")
 	flag.Parse()
 
 	home, err := os.UserHomeDir()
@@ -49,7 +51,7 @@ func control() error {
 		timeStr := time.Now().Format("2006-01-02 15:04:05")
 		commitMsg := fmt.Sprintf("update at: %s", timeStr)
 
-		commands := buildCommands(actualPath, customizeMsg, commitMsg)
+		commands := buildCommands(actualPath, msg, editMsg, commitMsg)
 
 		for _, c := range commands {
 			cmd := exec.Command(c[0], c[1:]...)
@@ -89,14 +91,21 @@ func loadConfig(home, configDirName, configFileName string) (*model.Config, erro
 	return &conf, nil
 }
 
-func buildCommands(path string, customizeMsg *bool, commitMsg string) [][]string {
+func buildCommands(path string, msg, editMsg *bool, commitMsg string) [][]string {
+	if *msg {
+		fmt.Print("commit message: ")
+		sc := bufio.NewScanner(os.Stdin)
+		sc.Scan()
+		commitMsg = sc.Text()
+		fmt.Printf("msg: %s \n", commitMsg)
+	}
 	commands := [][]string{
 		{"git", "-C", path, "pull"},
 		{"git", "-C", path, "add", "."},
 		{"git", "-C", path, "commit", "-m", commitMsg},
 		{"git", "-C", path, "push"},
 	}
-	if *customizeMsg {
+	if *editMsg {
 		commands[2] = []string{"git", "-C", path, "commit"}
 	}
 	return commands

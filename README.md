@@ -49,8 +49,8 @@ synchronize with auto generated messages with `update at: YYYY-MM-DD HH:MI:SS` s
 $ git-sync
 ```
 
-synchronize with custom messages with editor like `git commit` without `-m` option.  
-`-c` stands for **Custom** message for updated repositories.
+synchronize with messages with editor like `git commit` without `-m` option.  
+`-e` stands for **Edit** message for updated repositories.
 ```bash
-$ git-sync -c
+$ git-sync -e
 ```
