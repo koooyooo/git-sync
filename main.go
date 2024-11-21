@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/go-yaml/yaml"
 	"github.com/koooyooo/git-sync/model"
@@ -19,20 +20,15 @@ func main() {
 }
 
 func control() error {
+	flag.Parse()
+	specMsg := flag.Bool("m", false, "specify message")
+
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return err
 	}
-	confDir := fmt.Sprintf("%s/.git-sync", home)
-	if !file.Exists(confDir) {
-		_ = os.Mkdir(confDir, 0755)
-	}
-	b, err := os.ReadFile(fmt.Sprintf("%s/config.yaml", confDir))
+	conf, err := loadConfig(home, err)
 	if err != nil {
-		return err
-	}
-	var conf model.Config
-	if err := yaml.Unmarshal(b, &conf); err != nil {
 		return err
 	}
 	for _, d := range conf.Dirs {
@@ -52,12 +48,8 @@ func control() error {
 		timeStr := time.Now().Format("2006-01-02 15:04:05")
 		commitMsg := fmt.Sprintf("update at: %s", timeStr)
 
-		commands := [][]string{
-			{"git", "-C", path, "pull"},
-			{"git", "-C", path, "add", "."},
-			{"git", "-C", path, "commit", "-m", commitMsg},
-			{"git", "-C", path, "push"},
-		}
+		commands := buildCommands(path, specMsg, commitMsg)
+
 		for _, c := range commands {
 			cmd := exec.Command(c[0], c[1:]...)
 			cmd.Stdin = os.Stdin
@@ -69,4 +61,33 @@ func control() error {
 		}
 	}
 	return nil
+}
+
+func buildCommands(path string, specMsg *bool, commitMsg string) [][]string {
+	commands := [][]string{
+		{"git", "-C", path, "pull"},
+		{"git", "-C", path, "add", "."},
+		{"git", "-C", path, "commit", "-m", commitMsg},
+		{"git", "-C", path, "push"},
+	}
+	if *specMsg {
+		commands[2] = []string{"git", "-C", path, "commit", "-m", commitMsg}
+	}
+	return commands
+}
+
+func loadConfig(home string, err error) (model.Config, error) {
+	confDir := fmt.Sprintf("%s/.git-sync", home)
+	if !file.Exists(confDir) {
+		_ = os.Mkdir(confDir, 0755)
+	}
+	b, err := os.ReadFile(fmt.Sprintf("%s/config.yaml", confDir))
+	if err != nil {
+		return model.Config{}, err
+	}
+	var conf model.Config
+	if err := yaml.Unmarshal(b, &conf); err != nil {
+		return model.Config{}, err
+	}
+	return conf, nil
 }
