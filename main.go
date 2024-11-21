@@ -20,8 +20,8 @@ func main() {
 }
 
 func control() error {
+	customizeMsg := flag.Bool("c", false, "customize message")
 	flag.Parse()
-	specMsg := flag.Bool("m", false, "specify message")
 
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -48,7 +48,7 @@ func control() error {
 		timeStr := time.Now().Format("2006-01-02 15:04:05")
 		commitMsg := fmt.Sprintf("update at: %s", timeStr)
 
-		commands := buildCommands(path, specMsg, commitMsg)
+		commands := buildCommands(path, customizeMsg, commitMsg)
 
 		for _, c := range commands {
 			cmd := exec.Command(c[0], c[1:]...)
@@ -63,15 +63,15 @@ func control() error {
 	return nil
 }
 
-func buildCommands(path string, specMsg *bool, commitMsg string) [][]string {
+func buildCommands(path string, customizeMsg *bool, commitMsg string) [][]string {
 	commands := [][]string{
 		{"git", "-C", path, "pull"},
 		{"git", "-C", path, "add", "."},
 		{"git", "-C", path, "commit", "-m", commitMsg},
 		{"git", "-C", path, "push"},
 	}
-	if *specMsg {
-		commands[2] = []string{"git", "-C", path, "commit", "-m", commitMsg}
+	if *customizeMsg {
+		commands[2] = []string{"git", "-C", path, "commit"}
 	}
 	return commands
 }
