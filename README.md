@@ -1,4 +1,7 @@
 # git-sync
+
+<img src="image/image.png">
+
 This is git-based simple file-sync tool for multiple directories.  
 This is equivalent to applying following commands for each directory.
 
