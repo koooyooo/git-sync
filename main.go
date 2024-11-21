@@ -39,21 +39,17 @@ func control() error {
 	for _, d := range conf.Dirs {
 		fmt.Printf("target: [%s] %s \n", d.Name, d.Path)
 
-		// fix Path
-		path := d.Path
-		path = strings.ReplaceAll(path, "~", home)
-		path = strings.ReplaceAll(path, "$HOME", home)
-		path = strings.ReplaceAll(path, "${HOME}", home)
+		actualPath := interpretPathVariables(d.Path, home)
 
-		if !file.Exists(path) {
-			fmt.Printf("unexistence of path: %s\n", path)
+		if !file.Exists(actualPath) {
+			fmt.Printf("unexistence of path: defined=[%s], actual=[%s]\n", d.Path, actualPath)
 			continue
 		}
 
 		timeStr := time.Now().Format("2006-01-02 15:04:05")
 		commitMsg := fmt.Sprintf("update at: %s", timeStr)
 
-		commands := buildCommands(path, customizeMsg, commitMsg)
+		commands := buildCommands(actualPath, customizeMsg, commitMsg)
 
 		for _, c := range commands {
 			cmd := exec.Command(c[0], c[1:]...)
@@ -66,6 +62,13 @@ func control() error {
 		}
 	}
 	return nil
+}
+
+func interpretPathVariables(path string, home string) string {
+	path = strings.ReplaceAll(path, "~", home)
+	path = strings.ReplaceAll(path, "$HOME", home)
+	path = strings.ReplaceAll(path, "${HOME}", home)
+	return path
 }
 
 func loadConfig(home, configDirName, configFileName string) (*model.Config, error) {
