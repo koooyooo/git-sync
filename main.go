@@ -13,6 +13,11 @@ import (
 	"time"
 )
 
+const (
+	ConfigDirName  = ".git-sync"
+	ConfigFileName = "config.yaml"
+)
+
 func main() {
 	if err := control(); err != nil {
 		log.Fatal(err)
@@ -27,7 +32,7 @@ func control() error {
 	if err != nil {
 		return err
 	}
-	conf, err := loadConfig(home, err)
+	conf, err := loadConfig(home, ConfigDirName, ConfigFileName)
 	if err != nil {
 		return err
 	}
@@ -63,6 +68,24 @@ func control() error {
 	return nil
 }
 
+func loadConfig(home, configDirName, configFileName string) (*model.Config, error) {
+	confDir := fmt.Sprintf("%s/%s", home, configDirName)
+	if !file.Exists(confDir) {
+		if err := os.Mkdir(confDir, 0755); err != nil {
+			return nil, fmt.Errorf("fail in crating .git-sync dir: %v", err)
+		}
+	}
+	b, err := os.ReadFile(fmt.Sprintf("%s/%s", confDir, configFileName))
+	if err != nil {
+		return nil, err
+	}
+	var conf model.Config
+	if err := yaml.Unmarshal(b, &conf); err != nil {
+		return nil, err
+	}
+	return &conf, nil
+}
+
 func buildCommands(path string, customizeMsg *bool, commitMsg string) [][]string {
 	commands := [][]string{
 		{"git", "-C", path, "pull"},
@@ -74,20 +97,4 @@ func buildCommands(path string, customizeMsg *bool, commitMsg string) [][]string
 		commands[2] = []string{"git", "-C", path, "commit"}
 	}
 	return commands
-}
-
-func loadConfig(home string, err error) (model.Config, error) {
-	confDir := fmt.Sprintf("%s/.git-sync", home)
-	if !file.Exists(confDir) {
-		_ = os.Mkdir(confDir, 0755)
-	}
-	b, err := os.ReadFile(fmt.Sprintf("%s/config.yaml", confDir))
-	if err != nil {
-		return model.Config{}, err
-	}
-	var conf model.Config
-	if err := yaml.Unmarshal(b, &conf); err != nil {
-		return model.Config{}, err
-	}
-	return conf, nil
 }
